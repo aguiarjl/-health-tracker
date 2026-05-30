@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>Health Tracker v16</title>
+<title>Health Tracker v17</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,7 +41,7 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
 
   <div id="view-today">
 
-    <div id="stats-wrap" style="margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div id="stats-wrap" style="margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="card" style="padding:16px">
         <div style="font-size:10px;letter-spacing:2px;color:#555;margin-bottom:10px">CALORIES</div>
         <div style="background:#0f0f0f;border-radius:6px;height:6px;margin-bottom:10px;overflow:hidden">
@@ -59,15 +59,6 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
         <div id="prot-used" style="font-size:18px;font-family:'Bebas Neue',sans-serif;color:#60a5fa;letter-spacing:1px;line-height:1">0<span style="font-size:10px;color:#444;margin-left:2px">g used</span></div>
         <div id="prot-left" style="font-size:14px;font-family:'Bebas Neue',sans-serif;color:#555;letter-spacing:1px;margin-top:4px">115<span style="font-size:9px;color:#444;margin-left:2px">g left</span></div>
         <div style="font-size:9px;color:#333;margin-top:4px">goal 115g</div>
-      </div>
-      <div class="card" style="padding:16px">
-        <div style="font-size:10px;letter-spacing:2px;color:#555;margin-bottom:10px">SODIUM</div>
-        <div style="background:#0f0f0f;border-radius:6px;height:6px;margin-bottom:10px;overflow:hidden">
-          <div id="sod-bar" style="height:100%;width:0%;background:#a78bfa;border-radius:6px"></div>
-        </div>
-        <div id="sod-used" style="font-size:18px;font-family:'Bebas Neue',sans-serif;color:#a78bfa;letter-spacing:1px;line-height:1">0<span style="font-size:10px;color:#444;margin-left:2px">mg</span></div>
-        <div id="sod-left" style="font-size:14px;font-family:'Bebas Neue',sans-serif;color:#555;letter-spacing:1px;margin-top:4px">2300<span style="font-size:9px;color:#444;margin-left:2px">left</span></div>
-        <div style="font-size:9px;color:#333;margin-top:4px">goal 2300mg</div>
       </div>
     </div>
 
@@ -102,7 +93,6 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
           <input id="inp-cal" placeholder="Calories" type="number"/>
           <input id="inp-prot" placeholder="Protein (g)" type="number"/>
-          <input id="inp-sod" placeholder="Sodium (mg)" type="number"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px">
           <button onclick="addFoodEntry()" style="background:#e8e8e8;color:#0f0f0f;padding:10px;font-size:12px;font-weight:500;letter-spacing:1px">+ ADD</button>
@@ -142,10 +132,6 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
           <div style="font-size:10px;color:#555;margin-bottom:4px;letter-spacing:1px">PROTEIN (g)</div>
           <input id="scan-prot" type="number" placeholder="g"/>
         </div>
-        <div>
-          <div style="font-size:10px;color:#555;margin-bottom:4px;letter-spacing:1px">SODIUM (mg)</div>
-          <input id="scan-sod" type="number" placeholder="mg"/>
-        </div>
       </div>
       <div style="font-size:10px;color:#444;margin-top:2px">Per serving — edit if needed</div>
       <button onclick="confirmScanAdd()" style="background:#e8e8e8;color:#0f0f0f;padding:10px;font-size:12px;font-weight:500;letter-spacing:1px">+ ADD TO LOG</button>
@@ -156,9 +142,7 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
 
 <script>
 var BASE_GOAL = 2050;
-var PROT_GOAL = 115;
-var SOD_GOAL = 2300;
-var WORKOUTS = [
+var PROT_GOAL = 115;var WORKOUTS = [
   {name:"Basketball (1hr)", calories:700},
   {name:"Walk (40min)", calories:180}
 ];
@@ -204,13 +188,11 @@ function addFoodEntry() {
   var n = document.getElementById('inp-name').value.trim();
   var c = parseFloat(document.getElementById('inp-cal').value);
   var p = parseFloat(document.getElementById('inp-prot').value) || 0;
-  var s = parseFloat(document.getElementById('inp-sod').value) || 0;
   if (!n || isNaN(c) || c <= 0) return;
-  addFood(n, c, p, s);
+  addFood(n, c, p);
   document.getElementById('inp-name').value = '';
   document.getElementById('inp-cal').value = '';
   document.getElementById('inp-prot').value = '';
-  document.getElementById('inp-sod').value = '';
 }
 
 function addWorkoutCustom() {
@@ -222,8 +204,8 @@ function addWorkoutCustom() {
   document.getElementById('inp-wcal').value = '';
 }
 
-function addFood(name, cal, prot, sod) {
-  entries.push({ name: name, calories: Number(cal), protein: Number(prot) || 0, sodium: Number(sod) || 0, id: Date.now() });
+function addFood(name, cal, prot) {
+  entries.push({ name: name, calories: Number(cal), protein: Number(prot) || 0, id: Date.now() });
   persist();
   render();
   doShake();
@@ -262,11 +244,10 @@ function saveToFavorites() {
   var n = document.getElementById('inp-name').value.trim();
   var c = parseFloat(document.getElementById('inp-cal').value);
   var p = parseFloat(document.getElementById('inp-prot').value) || 0;
-  var s = parseFloat(document.getElementById('inp-sod').value) || 0;
   if (!n || isNaN(c) || c <= 0) { alert('Enter a food name and calories first.'); return; }
   var favs = getFavorites();
   for (var i=0; i<favs.length; i++) { if (favs[i].name === n) { alert(n + ' is already in favorites.'); return; } }
-  favs.push({ name: n, calories: Number(c), protein: Number(p), sodium: Number(s) });
+  favs.push({ name: n, calories: Number(c), protein: Number(p) });
   saveFavorites(favs);
   renderFavorites();
 }
@@ -295,7 +276,7 @@ function renderFavorites() {
     var f = favs[i];
     var safe = f.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     html += '<div style="display:flex;align-items:center;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:6px;overflow:hidden">';
-    html += '<button onclick="addFood(\'' + safe + '\',' + f.calories + ',' + f.protein + ',' + (f.sodium||0) + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#444">' + f.calories + 'kcal</span></button>';
+    html += '<button onclick="addFood(\'' + safe + '\',' + f.calories + ',' + f.protein + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#444">' + f.calories + 'kcal</span></button>';
     html += '<button onclick="removeFavorite(\'' + safe + '\')" style="background:none;color:#444;font-size:13px;padding:6px 10px;border-left:1px solid #2a2a4a">x</button>';
     html += '</div>';
   }
@@ -349,9 +330,9 @@ function manualBarcodeEntry() {
 
 function getBarcodeDB() { try { return JSON.parse(storeGet('fuel_barcodes') || '{}'); } catch(e) { return {}; } }
 function saveBarcodeDB(db) { storeSet('fuel_barcodes', JSON.stringify(db)); }
-function saveBarcodeEntry(barcode, name, cal, prot, sod) {
+function saveBarcodeEntry(barcode, name, cal, prot) {
   var db = getBarcodeDB();
-  db[barcode] = { name: name, calories: Number(cal), protein: Number(prot) || 0, sodium: Number(sod) || 0 };
+  db[barcode] = { name: name, calories: Number(cal), protein: Number(prot) || 0 };
   saveBarcodeDB(db);
 }
 
@@ -360,7 +341,7 @@ function lookupBarcode(barcode) {
   var db = getBarcodeDB();
   if (db[barcode]) {
     var entry = db[barcode];
-    showScanResult(entry.name, entry.calories, entry.protein, entry.sodium || 0, barcode, true);
+    showScanResult(entry.name, entry.calories, entry.protein, barcode, true);
     return;
   }
   // Fall back to Open Food Facts
@@ -379,10 +360,9 @@ function lookupBarcode(barcode) {
             var nutriments = p.nutriments || {};
             var cal = Math.round(nutriments['energy-kcal_serving'] || nutriments['energy-kcal_100g'] || 0);
             var prot = Math.round((nutriments['proteins_serving'] || nutriments['proteins_100g'] || 0) * 10) / 10;
-            var sod = Math.round((nutriments['sodium_serving'] || nutriments['sodium_100g'] || 0) * 1000);
-            showScanResult(name, cal, prot, sod, barcode, false);
+            showScanResult(name, cal, prot, barcode, false);
           } else {
-            showScanResult('', 0, 0, 0, barcode, false);
+            showScanResult('', 0, 0, barcode, false);
           }
         } catch(e) {
           showScanResult('', 0, 0, 0, barcode, false);
@@ -395,7 +375,7 @@ function lookupBarcode(barcode) {
   xhr.send();
 }
 
-function showScanResult(name, cal, prot, sod, barcode, fromLocal) {
+function showScanResult(name, cal, prot, barcode, fromLocal) {
   pendingScan = { barcode: barcode, fromLocal: fromLocal };
   document.getElementById('scanner-status').textContent = '';
   document.getElementById('scan-result-name').value = name || '';
@@ -404,7 +384,6 @@ function showScanResult(name, cal, prot, sod, barcode, fromLocal) {
   document.getElementById('scan-result-info').textContent = sourceLabel;
   document.getElementById('scan-cal').value = cal || '';
   document.getElementById('scan-prot').value = prot || '';
-  document.getElementById('scan-sod').value = sod || '';
   document.getElementById('scan-result-modal').classList.add('active');
 }
 
@@ -412,13 +391,12 @@ function confirmScanAdd() {
   var name = document.getElementById('scan-result-name').value.trim();
   var cal = parseFloat(document.getElementById('scan-cal').value);
   var prot = parseFloat(document.getElementById('scan-prot').value) || 0;
-  var sod = parseFloat(document.getElementById('scan-sod').value) || 0;
   if (!name) { alert('Please enter a product name.'); return; }
   if (isNaN(cal) || cal <= 0) { alert('Please enter valid calories.'); return; }
   if (pendingScan && pendingScan.barcode) {
-    saveBarcodeEntry(pendingScan.barcode, name, cal, prot, sod);
+    saveBarcodeEntry(pendingScan.barcode, name, cal, prot);
   }
-  addFood(name, cal, prot, sod);
+  addFood(name, cal, prot);
   closeScanResult();
 }
 
@@ -439,7 +417,6 @@ function render() {
   var goal = effectiveGoal();
   var totalCal = 0; for (var i=0; i<entries.length; i++) totalCal += entries[i].calories;
   var totalProt = 0; for (var i=0; i<entries.length; i++) totalProt += entries[i].protein;
-  var totalSod = 0; for (var i=0; i<entries.length; i++) totalSod += (entries[i].sodium || 0);
   var bonus = goal - BASE_GOAL;
   var calLeft = goal - totalCal;
   var protLeft = PROT_GOAL - totalProt; if (protLeft < 0) protLeft = 0;
@@ -462,16 +439,6 @@ function render() {
   document.getElementById('prot-used').innerHTML = totalProt + '<span style="font-size:12px;color:#444;margin-left:2px">g used</span>';
   document.getElementById('prot-left').style.color = protLeft <= 0 ? '#22c55e' : '#555';
   document.getElementById('prot-left').innerHTML = (protLeft <= 0 ? 0 : protLeft) + '<span style="font-size:11px;color:#444;margin-left:2px">g left</span>';
-
-  var sodLeft = SOD_GOAL - totalSod; if (sodLeft < 0) sodLeft = 0;
-  var sodPct = totalSod / SOD_GOAL * 100; if (sodPct > 100) sodPct = 100;
-  var sodColor = sodPct > 95 ? '#ef4444' : sodPct > 75 ? '#f59e0b' : '#a78bfa';
-  document.getElementById('sod-bar').style.width = sodPct + '%';
-  document.getElementById('sod-bar').style.background = sodColor;
-  document.getElementById('sod-used').style.color = sodColor;
-  document.getElementById('sod-used').innerHTML = totalSod + '<span style="font-size:10px;color:#444;margin-left:2px">mg</span>';
-  document.getElementById('sod-left').style.color = sodLeft <= 0 ? '#ef4444' : '#555';
-  document.getElementById('sod-left').innerHTML = sodLeft + '<span style="font-size:9px;color:#444;margin-left:2px">left</span>';
 
   var badge = document.getElementById('bonus-badge');
   if (bonus > 0) { badge.style.display = 'block'; badge.textContent = '+' + bonus + ' kcal unlocked'; }
@@ -506,7 +473,7 @@ function render() {
     for (var fi=0; fi<frequent.length; fi++) {
       var fit = frequent[fi];
       var fsafe = fit.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      qhtml += '<button onclick="addFood(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ',' + (fit.sodium||0) + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
+      qhtml += '<button onclick="addFood(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
     }
     qa.innerHTML = qhtml;
   } else { fwrap.style.display = 'none'; }
@@ -545,7 +512,7 @@ function render() {
     var timeStr = t.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
     fhtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;' + border + 'background:#161616">';
     fhtml += '<div><div style="font-size:13px;color:#ccc">' + e.name + '</div>';
-    fhtml += '<div style="font-size:10px;color:#555;margin-top:1px">' + e.protein + 'g protein' + (e.sodium ? ' · ' + e.sodium + 'mg sodium' : '') + ' · ' + timeStr + '</div></div>';
+    fhtml += '<div style="font-size:10px;color:#555;margin-top:1px">' + e.protein + 'g protein · ' + timeStr + '</div></div>';
     fhtml += '<div style="display:flex;align-items:center;gap:12px">';
     fhtml += '<div style="font-size:15px;font-family:Bebas Neue,sans-serif;color:#e8e8e8;letter-spacing:1px">' + e.calories + '</div>';
     fhtml += '<button onclick="removeFood(' + e.id + ')" style="background:none;color:#555;font-size:16px;padding:0 4px">x</button>';
@@ -574,7 +541,7 @@ function fmtDay(s) {
   return d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
 }
 
-function readdFood(name, cal, prot, sod) { addFood(name, cal, prot, sod || 0); switchTab('today'); }
+function readdFood(name, cal, prot) { addFood(name, cal, prot); switchTab('today'); }
 
 function toggleDay(dateStr) {
   expandedDay = expandedDay === dateStr ? null : dateStr;
@@ -600,7 +567,7 @@ function renderHistory() {
   for (var i=0; i<unique.length; i++) {
     var it = unique[i];
     var safeName = it.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    html += '<button onclick="readdFood(\'' + safeName + '\',' + it.calories + ',' + it.protein + ',' + (it.sodium||0) + ')" style="background:#161616;color:#aaa;font-size:11px;padding:7px 11px;border:1px solid #2a2a2a;border-radius:6px">+ ' + it.name + ' ' + it.calories + 'kcal</button>';
+    html += '<button onclick="readdFood(\'' + safeName + '\',' + it.calories + ',' + it.protein + ')" style="background:#161616;color:#aaa;font-size:11px;padding:7px 11px;border:1px solid #2a2a2a;border-radius:6px">+ ' + it.name + ' ' + it.calories + 'kcal</button>';
   }
   html += '</div></div>';
   for (var i=0; i<past.length; i++) {
@@ -644,7 +611,7 @@ function renderHistory() {
         html += '<div style="font-size:10px;color:#444">' + it.protein + 'g protein' + (tStr ? ' · ' + tStr : '') + '</div></div>';
         html += '<div style="display:flex;align-items:center;gap:10px">';
         html += '<div style="font-size:13px;font-family:Bebas Neue,sans-serif;color:#666;letter-spacing:1px">' + it.calories + '</div>';
-        html += '<button onclick="readdFood(\'' + safeName + '\',' + it.calories + ',' + it.protein + ',' + (it.sodium||0) + ')" style="background:#1e1e1e;color:#555;font-size:10px;padding:3px 8px;border:1px solid #2a2a2a">+ today</button>';
+        html += '<button onclick="readdFood(\'' + safeName + '\',' + it.calories + ',' + it.protein + ')" style="background:#1e1e1e;color:#555;font-size:10px;padding:3px 8px;border:1px solid #2a2a2a">+ today</button>';
         html += '</div></div>';
       }
     }
@@ -678,7 +645,6 @@ window.onload = function() {
   document.getElementById('inp-name').onkeydown = function(e) { if(e.key==='Enter') addFoodEntry(); };
   document.getElementById('inp-cal').onkeydown = function(e) { if(e.key==='Enter') addFoodEntry(); };
   document.getElementById('inp-prot').onkeydown = function(e) { if(e.key==='Enter') addFoodEntry(); };
-  document.getElementById('inp-sod').onkeydown = function(e) { if(e.key==='Enter') addFoodEntry(); };
   document.getElementById('inp-wname').onkeydown = function(e) { if(e.key==='Enter') addWorkoutCustom(); };
   document.getElementById('inp-wcal').onkeydown = function(e) { if(e.key==='Enter') addWorkoutCustom(); };
   render();
