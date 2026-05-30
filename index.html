@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>Health Tracker v17</title>
+<title>Health Tracker v18</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -112,6 +112,24 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
 
 </div>
 
+
+<!-- Serving Size Modal -->
+<div id="serving-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1001;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#161616;border:1px solid #333;border-radius:12px;padding:20px;width:100%;max-width:400px">
+    <div style="font-size:10px;letter-spacing:2px;color:#555;margin-bottom:12px">SERVINGS</div>
+    <div id="serving-food-name" style="font-size:16px;color:#e8e8e8;margin-bottom:4px"></div>
+    <div id="serving-per-info" style="font-size:11px;color:#555;margin-bottom:16px"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <button onclick="changeServing(-0.5)" style="background:#1a1a1a;color:#e8e8e8;font-size:20px;padding:8px 16px;border:1px solid #2a2a2a;border-radius:6px">−</button>
+      <input id="serving-count" type="number" value="1" min="0.25" step="0.25" oninput="updateServingTotal()" style="flex:1;text-align:center;font-size:20px;font-family:Bebas Neue,sans-serif;letter-spacing:2px"/>
+      <button onclick="changeServing(0.5)" style="background:#1a1a1a;color:#e8e8e8;font-size:20px;padding:8px 16px;border:1px solid #2a2a2a;border-radius:6px">+</button>
+    </div>
+    <div id="serving-total" style="font-size:13px;color:#555;text-align:center;margin-bottom:16px;letter-spacing:1px"></div>
+    <button onclick="confirmServing()" style="width:100%;background:#e8e8e8;color:#0f0f0f;padding:10px;font-size:12px;font-weight:500;letter-spacing:1px;border-radius:6px;border:none;margin-bottom:8px">+ ADD TO LOG</button>
+    <button onclick="closeServingModal()" style="width:100%;background:none;color:#555;padding:8px;font-size:11px;border:1px solid #2a2a2a;border-radius:6px">CANCEL</button>
+  </div>
+</div>
+
 <!-- Hidden camera input for barcode photo -->
 <input type="file" id="barcode-input" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodePhoto(this)"/>
 
@@ -189,10 +207,10 @@ function addFoodEntry() {
   var c = parseFloat(document.getElementById('inp-cal').value);
   var p = parseFloat(document.getElementById('inp-prot').value) || 0;
   if (!n || isNaN(c) || c <= 0) return;
-  addFood(n, c, p);
   document.getElementById('inp-name').value = '';
   document.getElementById('inp-cal').value = '';
   document.getElementById('inp-prot').value = '';
+  openServingModal(n, c, p);
 }
 
 function addWorkoutCustom() {
@@ -276,7 +294,7 @@ function renderFavorites() {
     var f = favs[i];
     var safe = f.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     html += '<div style="display:flex;align-items:center;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:6px;overflow:hidden">';
-    html += '<button onclick="addFood(\'' + safe + '\',' + f.calories + ',' + f.protein + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#444">' + f.calories + 'kcal</span></button>';
+    html += '<button onclick="openServingModal(\'' + safe + '\',' + f.calories + ',' + f.protein + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#444">' + f.calories + 'kcal</span></button>';
     html += '<button onclick="removeFavorite(\'' + safe + '\')" style="background:none;color:#444;font-size:13px;padding:6px 10px;border-left:1px solid #2a2a4a">x</button>';
     html += '</div>';
   }
@@ -396,8 +414,8 @@ function confirmScanAdd() {
   if (pendingScan && pendingScan.barcode) {
     saveBarcodeEntry(pendingScan.barcode, name, cal, prot);
   }
-  addFood(name, cal, prot);
   closeScanResult();
+  openServingModal(name, cal, prot);
 }
 
 function closeScanResult() {
@@ -473,7 +491,7 @@ function render() {
     for (var fi=0; fi<frequent.length; fi++) {
       var fit = frequent[fi];
       var fsafe = fit.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      qhtml += '<button onclick="addFood(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
+      qhtml += '<button onclick="openServingModal(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
     }
     qa.innerHTML = qhtml;
   } else { fwrap.style.display = 'none'; }
@@ -660,6 +678,51 @@ setInterval(function() {
     render();
   }
 }, 60000);
+
+// ---- SERVING SIZE MODAL ----
+var pendingServing = null;
+
+function openServingModal(name, cal, prot) {
+  pendingServing = { name: name, calories: Number(cal), protein: Number(prot) || 0 };
+  document.getElementById('serving-food-name').textContent = name;
+  document.getElementById('serving-per-info').textContent = cal + ' kcal · ' + prot + 'g protein per serving';
+  document.getElementById('serving-count').value = '1';
+  updateServingTotal();
+  document.getElementById('serving-modal').style.display = 'flex';
+}
+
+function closeServingModal() {
+  document.getElementById('serving-modal').style.display = 'none';
+  pendingServing = null;
+}
+
+function changeServing(delta) {
+  var inp = document.getElementById('serving-count');
+  var val = parseFloat(inp.value) || 1;
+  val = Math.max(0.25, Math.round((val + delta) * 4) / 4);
+  inp.value = val;
+  updateServingTotal();
+}
+
+function updateServingTotal() {
+  if (!pendingServing) return;
+  var s = parseFloat(document.getElementById('serving-count').value) || 1;
+  var totalCal = Math.round(pendingServing.calories * s);
+  var totalProt = Math.round(pendingServing.protein * s * 10) / 10;
+  document.getElementById('serving-total').textContent = totalCal + ' kcal · ' + totalProt + 'g protein total';
+}
+
+function confirmServing() {
+  if (!pendingServing) return;
+  var s = parseFloat(document.getElementById('serving-count').value) || 1;
+  var totalCal = Math.round(pendingServing.calories * s);
+  var totalProt = Math.round(pendingServing.protein * s * 10) / 10;
+  var label = s === 1 ? pendingServing.name : pendingServing.name + ' ×' + s;
+  addFood(label, totalCal, totalProt);
+  closeServingModal();
+}
+// ---- END SERVING SIZE MODAL ----
+
 </script>
 </body>
 </html>
