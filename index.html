@@ -23,6 +23,10 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
   background: rgba(0,0,0,0.85); z-index: 1001; align-items: center; justify-content: center; padding: 24px;
 }
 #scan-result-modal.active { display: flex; }
+#serving-modal {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85); z-index: 1002; align-items: center; justify-content: center; padding: 24px;
+}
 #serving-modal.active { display: flex; }
 #scan-result-box { background: #161616; border: 1px solid #333; border-radius: 12px; padding: 20px; width: 100%; max-width: 400px; }
 </style>
@@ -115,7 +119,7 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
 
 
 <!-- Serving Size Modal -->
-<div id="serving-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1002;align-items:center;justify-content:center;padding:24px">
+<div id="serving-modal">
   <div style="background:#161616;border:1px solid #333;border-radius:12px;padding:20px;width:100%;max-width:400px">
     <div style="font-size:10px;letter-spacing:2px;color:#555;margin-bottom:12px">SERVINGS</div>
     <div id="serving-food-name" style="font-size:16px;color:#e8e8e8;margin-bottom:4px"></div>
@@ -269,6 +273,9 @@ function saveToFavorites() {
   favs.push({ name: n, calories: Number(c), protein: Number(p) });
   saveFavorites(favs);
   renderFavorites();
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-cal').value = '';
+  document.getElementById('inp-prot').value = '';
 }
 
 function removeFavorite(name) {
