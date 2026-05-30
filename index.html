@@ -555,9 +555,15 @@ function render() {
   flog.innerHTML = fhtml;
 }
 
+function isValidDateKey(k) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return false;
+  var d = new Date(k + 'T12:00:00');
+  return !isNaN(d.getTime());
+}
+
 function getPastWeek() {
   var h = getHistory(); var today = todayKey(); var days = [];
-  for (var k in h) { if (k !== today) days.push(k); }
+  for (var k in h) { if (k !== today && isValidDateKey(k)) days.push(k); }
   days.sort(function(a,b) { return b > a ? 1 : -1; });
   if (days.length > 7) days = days.slice(0,7);
   return days.map(function(d) { return [d, h[d]]; });
