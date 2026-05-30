@@ -23,6 +23,7 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
   background: rgba(0,0,0,0.85); z-index: 1001; align-items: center; justify-content: center; padding: 24px;
 }
 #scan-result-modal.active { display: flex; }
+#serving-modal.active { display: flex; }
 #scan-result-box { background: #161616; border: 1px solid #333; border-radius: 12px; padding: 20px; width: 100%; max-width: 400px; }
 </style>
 </head>
@@ -114,7 +115,7 @@ button { cursor: pointer; font-family: 'DM Mono', monospace; border: none; borde
 
 
 <!-- Serving Size Modal -->
-<div id="serving-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1001;align-items:center;justify-content:center;padding:24px">
+<div id="serving-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1002;align-items:center;justify-content:center;padding:24px">
   <div style="background:#161616;border:1px solid #333;border-radius:12px;padding:20px;width:100%;max-width:400px">
     <div style="font-size:10px;letter-spacing:2px;color:#555;margin-bottom:12px">SERVINGS</div>
     <div id="serving-food-name" style="font-size:16px;color:#e8e8e8;margin-bottom:4px"></div>
@@ -688,11 +689,11 @@ function openServingModal(name, cal, prot) {
   document.getElementById('serving-per-info').textContent = cal + ' kcal · ' + prot + 'g protein per serving';
   document.getElementById('serving-count').value = '1';
   updateServingTotal();
-  document.getElementById('serving-modal').style.display = 'flex';
+  document.getElementById('serving-modal').classList.add('active');
 }
 
 function closeServingModal() {
-  document.getElementById('serving-modal').style.display = 'none';
+  document.getElementById('serving-modal').classList.remove('active');
   pendingServing = null;
 }
 
