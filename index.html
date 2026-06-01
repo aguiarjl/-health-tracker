@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Health Tracker v28</title>
+<title>Health Tracker v29</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -23,11 +23,6 @@ button { cursor: pointer; font-family: 'Inter', -apple-system, sans-serif; borde
 .fadein { animation: fadeIn 0.3s ease; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 .shake { animation: shake 0.4s ease; }
-#serving-modal {
-  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85); z-index: 1002; align-items: center; justify-content: center; padding: 24px;
-}
-#serving-modal.active { display: flex; }
 #autocomplete-list .ac-item { padding:10px 12px; border-bottom:1px solid #262626; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; }
 #autocomplete-list .ac-item:last-child { border-bottom:none; }
 #autocomplete-list .ac-item:active { background:#252525; }
@@ -109,6 +104,7 @@ button { cursor: pointer; font-family: 'Inter', -apple-system, sans-serif; borde
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
           <input id="inp-cal" placeholder="Cal" type="number"/>
           <input id="inp-prot" placeholder="Protein (g)" type="number"/>
+          <input id="inp-servings" placeholder="Servings" type="number" step="0.25" min="0"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
           <button onclick="addFoodEntry()" style="background:#e8e8e8;color:#0f0f0f;padding:10px;font-size:12px;font-weight:500;letter-spacing:1px">+ ADD</button>
@@ -174,11 +170,19 @@ function addFoodEntry() {
   var n = document.getElementById('inp-name').value.trim();
   var c = parseFloat(document.getElementById('inp-cal').value);
   var p = parseFloat(document.getElementById('inp-prot').value) || 0;
+  var sv = parseFloat(document.getElementById('inp-servings').value);
   if (!n || isNaN(c) || c <= 0) return;
+  if (isNaN(sv) || sv <= 0) sv = 1;
+  var totalCal = Math.round(c * sv);
+  var totalProt = Math.round(p * sv * 10) / 10;
+  var label = sv === 1 ? n : n + ' ×' + sv;
+  // Silently save base (per-serving) values to personal DB
+  addToPersonalDB(n, c, p);
+  addFood(label, totalCal, totalProt);
   document.getElementById('inp-name').value = '';
   document.getElementById('inp-cal').value = '';
   document.getElementById('inp-prot').value = '';
-  openServingModal(n, c, p);
+  document.getElementById('inp-servings').value = '';
 }
 
 function addWorkoutCustom() {
@@ -265,7 +269,7 @@ function renderFavorites() {
     var f = favs[i];
     var safe = f.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     html += '<div style="display:flex;align-items:center;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:6px;overflow:hidden">';
-    html += '<button onclick="openServingModal(\'' + safe + '\',' + f.calories + ',' + f.protein + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#777777">' + f.calories + 'CAL</span></button>';
+    html += '<button onclick="pickAutocomplete(\'' + safe + '\',' + f.calories + ',' + f.protein + ')" style="background:none;color:#aaa;font-size:11px;padding:6px 10px;flex:1;text-align:left">' + f.name + ' <span style="color:#777777">' + f.calories + 'CAL</span></button>';
     html += '<button onclick="removeFavorite(\'' + safe + '\')" style="background:none;color:#777777;font-size:13px;padding:6px 10px;border-left:1px solid #2a2a4a">x</button>';
     html += '</div>';
   }
@@ -344,7 +348,7 @@ function render() {
     for (var fi=0; fi<frequent.length; fi++) {
       var fit = frequent[fi];
       var fsafe = fit.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      qhtml += '<button onclick="addFood(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
+      qhtml += '<button onclick="pickAutocomplete(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
     }
     qa.innerHTML = qhtml;
   } else { fwrap.style.display = 'none'; }
@@ -624,6 +628,7 @@ function pickAutocomplete(name, cal, prot) {
   document.getElementById('inp-name').value = name;
   document.getElementById('inp-cal').value = cal;
   document.getElementById('inp-prot').value = prot;
+  document.getElementById('inp-servings').value = '';
   hideAutocomplete();
   acOFFResults = [];
 }
@@ -691,82 +696,7 @@ document.addEventListener('click', function(e){
 });
 // ---- END FOOD DATABASE ----
 
-// ---- SERVING SIZE MODAL ----
-var pendingServing = null;
-
-function openServingModal(name, cal, prot) {
-  pendingServing = { name: name, calories: Number(cal), protein: Number(prot) || 0 };
-  document.getElementById('serving-food-name').textContent = name;
-  document.getElementById('serving-per-info').textContent = cal + ' Cal · ' + prot + 'g Protein per serving';
-  document.getElementById('serving-count').value = '1';
-  updateServingTotal();
-  document.getElementById('serving-modal').classList.add('active');
-}
-
-function closeServingModal() {
-  document.getElementById('serving-modal').classList.remove('active');
-  pendingServing = null;
-}
-
-function changeServing(delta) {
-  var inp = document.getElementById('serving-count');
-  var val = parseFloat(inp.value) || 1;
-  val = Math.max(0.25, Math.round((val + delta) * 4) / 4);
-  inp.value = val;
-  updateServingTotal();
-}
-
-function updateServingTotal() {
-  if (!pendingServing) return;
-  var s = parseFloat(document.getElementById('serving-count').value) || 1;
-  var totalCal = Math.round(pendingServing.calories * s);
-  var totalProt = Math.round(pendingServing.protein * s * 10) / 10;
-  document.getElementById('serving-total').textContent = totalCal + ' Cal · ' + totalProt + 'g Protein total';
-}
-
-function confirmServing() {
-  if (!pendingServing) return;
-  var s = parseFloat(document.getElementById('serving-count').value) || 1;
-  var totalCal = Math.round(pendingServing.calories * s);
-  var totalProt = Math.round(pendingServing.protein * s * 10) / 10;
-  var label = s === 1 ? pendingServing.name : pendingServing.name + ' ×' + s;
-  addToPersonalDB(pendingServing.name, pendingServing.calories, pendingServing.protein);
-  addFood(label, totalCal, totalProt);
-  closeServingModal();
-}
-// ---- END SERVING SIZE MODAL ----
 </script>
 
-<!-- Serving Size Modal -->
-<div id="serving-modal">
-  <div style="background:#161616;border:1px solid #5a5a5a;border-radius:12px;padding:20px;width:100%;max-width:400px">
-    <div style="font-size:10px;letter-spacing:2px;color:#8a8a8a;margin-bottom:12px">SERVINGS</div>
-    <div id="serving-food-name" style="font-size:16px;color:#e8e8e8;margin-bottom:6px"></div>
-    <div id="serving-per-info" style="font-size:11px;color:#8a8a8a;margin-bottom:16px"></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <button onclick="changeServing(-0.5)" style="background:#1a1a1a;color:#e8e8e8;font-size:22px;width:48px;height:48px;border:1px solid #2a2a2a;border-radius:6px">−</button>
-      <input id="serving-count" type="number" value="1" min="0.25" step="0.25" oninput="updateServingTotal()" style="flex:1;text-align:center;font-size:24px;font-family:Inter,sans-serif;font-weight:700;letter-spacing:2px;padding:10px"/>
-      <button onclick="changeServing(0.5)" style="background:#1a1a1a;color:#e8e8e8;font-size:22px;width:48px;height:48px;border:1px solid #2a2a2a;border-radius:6px">+</button>
-    </div>
-    <div id="serving-total" style="font-size:12px;color:#8a8a8a;text-align:center;margin-bottom:16px;letter-spacing:1px"></div>
-    <button onclick="confirmServing()" style="width:100%;background:#e8e8e8;color:#0f0f0f;padding:11px;font-size:12px;font-weight:500;letter-spacing:1px;border-radius:6px;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:8px">+ ADD TO LOG</button>
-    <button onclick="closeServingModal()" style="width:100%;background:none;color:#8a8a8a;padding:8px;font-size:11px;border:1px solid #2a2a2a;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif">CANCEL</button>
-  </div>
-</div>
-
-<!-- Hidden DB manager trigger -->
-<div id="db-dot" onclick="openDBManager()" title="Food database"></div>
-
-<!-- Personal Food DB Manager -->
-<div id="db-modal">
-  <div style="max-width:480px;margin:0 auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div style="font-family:'Inter',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px;color:#fff">FOOD DATABASE</div>
-      <button onclick="closeDBManager()" style="background:#1a1a1a;color:#aaa;font-size:13px;padding:8px 14px;border:1px solid #2a2a2a;border-radius:6px">CLOSE</button>
-    </div>
-    <div style="font-size:11px;color:#8a8a8a;margin-bottom:16px;letter-spacing:1px">Foods you log are saved here automatically. Delete any you don't want suggested.</div>
-    <div id="db-list"></div>
-  </div>
-</div>
 </body>
 </html>
