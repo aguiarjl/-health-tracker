@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Health Tracker v29</title>
+<title>Health Tracker v30</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -87,11 +87,6 @@ button { cursor: pointer; font-family: 'Inter', -apple-system, sans-serif; borde
     <div id="favorites-wrap" style="margin-bottom:16px;display:none">
       <div style="font-size:10px;letter-spacing:2px;color:#8a8a8a;margin-bottom:8px">FAVORITES</div>
       <div id="favorites-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-    </div>
-
-    <div id="frequent-wrap" style="margin-bottom:16px;display:none">
-      <div style="font-size:10px;letter-spacing:2px;color:#8a8a8a;margin-bottom:8px">FREQUENT FOODS</div>
-      <div id="quick-add" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
 
     <div class="card" style="padding:16px;margin-bottom:20px">
@@ -318,40 +313,6 @@ function render() {
   var badge = document.getElementById('bonus-badge');
   if (bonus > 0) { badge.style.display = 'block'; badge.textContent = '+' + bonus + ' Cal unlocked'; }
   else { badge.style.display = 'none'; }
-
-  // Frequent foods (past 7 days, 2+ times, not in favorites)
-  var h = getHistory();
-  var today = todayKey();
-  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-  var counts = {}; var foodMap = {};
-  for (var k in h) {
-    if (k === today) continue;
-    var kDate = new Date(k + 'T12:00:00');
-    if (kDate < cutoff) continue;
-    var dayItems = Array.isArray(h[k]) ? h[k] : (h[k].entries || []);
-    var seen = {};
-    for (var fi=0; fi<dayItems.length; fi++) {
-      var fn = dayItems[fi].name;
-      if (!seen[fn]) { counts[fn] = (counts[fn] || 0) + 1; seen[fn] = true; }
-      foodMap[fn] = dayItems[fi];
-    }
-  }
-  var frequent = [];
-  var favs = getFavorites(); var favNames = {};
-  for (var fi2=0; fi2<favs.length; fi2++) favNames[favs[fi2].name.toLowerCase()] = true;
-  for (var fn in counts) { if (counts[fn] >= 2 && !favNames[fn.toLowerCase()]) frequent.push(foodMap[fn]); }
-  var fwrap = document.getElementById('frequent-wrap');
-  var qa = document.getElementById('quick-add');
-  if (frequent.length > 0) {
-    fwrap.style.display = 'block';
-    var qhtml = '';
-    for (var fi=0; fi<frequent.length; fi++) {
-      var fit = frequent[fi];
-      var fsafe = fit.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      qhtml += '<button onclick="pickAutocomplete(\'' + fsafe + '\',' + fit.calories + ',' + fit.protein + ')" style="background:#1a1a1a;color:#aaa;font-size:11px;padding:6px 10px;border:1px solid #2a2a2a">' + fit.name + '</button>';
-    }
-    qa.innerHTML = qhtml;
-  } else { fwrap.style.display = 'none'; }
 
   // Workout log
   var wlog = document.getElementById('workout-log');
