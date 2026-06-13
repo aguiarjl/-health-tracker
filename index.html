@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Health Tracker v32</title>
+<title>Health Tracker v33</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -610,6 +610,21 @@ document.addEventListener('click', function(e){
 // ---- END FOOD DATABASE ----
 
 </script>
+
+<!-- Hidden DB manager trigger -->
+<div id="db-dot" onclick="openDBManager()" title="Food database"></div>
+
+<!-- Personal Food DB Manager -->
+<div id="db-modal">
+  <div style="max-width:480px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-family:'Inter',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px;color:#fff">FOOD DATABASE</div>
+      <button onclick="closeDBManager()" style="background:#1a1a1a;color:#aaa;font-size:13px;padding:8px 14px;border:1px solid #2a2a2a;border-radius:6px">CLOSE</button>
+    </div>
+    <div style="font-size:11px;color:#8a8a8a;margin-bottom:16px;letter-spacing:0.3px">Foods you log are saved here automatically. Delete any you don't want suggested.</div>
+    <div id="db-list"></div>
+  </div>
+</div>
 
 </body>
 </html>
