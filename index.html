@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Health Tracker v30</title>
+<title>Health Tracker v32</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -499,7 +499,6 @@ setInterval(function() {
 
 
 // ---- FOOD DATABASE + AUTOCOMPLETE ----
-var SEED_FOODS = [["Egg (large)",72,6],["Egg white",17,4],["Chicken breast (4oz)",187,35],["Chicken thigh (4oz)",220,28],["Ground beef 80/20 (4oz)",287,19],["Ground beef 90/10 (4oz)",200,23],["Ground turkey (4oz)",170,22],["Salmon (4oz)",233,25],["Tilapia (4oz)",145,30],["Shrimp (4oz)",120,23],["Tuna canned (in water, 4oz)",120,26],["Bacon (1 slice)",43,3],["Pork chop (4oz)",231,24],["Steak sirloin (4oz)",207,23],["White rice (1 cup cooked)",205,4],["Brown rice (1 cup cooked)",216,5],["Quinoa (1 cup cooked)",222,8],["Pasta (1 cup cooked)",221,8],["Bread (1 slice)",79,3],["Whole wheat bread (1 slice)",81,4],["Bagel (plain)",245,10],["Tortilla (flour, 8in)",144,4],["Oatmeal (1 cup cooked)",154,6],["Potato (medium)",161,4],["Sweet potato (medium)",103,2],["Banana (medium)",105,1],["Apple (medium)",95,0.5],["Orange (medium)",62,1],["Blueberries (1 cup)",84,1],["Strawberries (1 cup)",49,1],["Grapes (1 cup)",104,1],["Avocado (half)",120,1.5],["Broccoli (1 cup)",31,2.5],["Spinach (1 cup raw)",7,1],["Carrots (1 cup)",52,1],["Mixed greens (1 cup)",9,1],["Tomato (medium)",22,1],["Cucumber (1 cup)",16,1],["Bell pepper (1 cup)",30,1],["Milk 2% (1 cup)",122,8],["Milk whole (1 cup)",149,8],["Almond milk unsweetened (1 cup)",30,1],["Greek yogurt plain (1 cup)",100,17],["Greek yogurt nonfat (1 cup)",120,22],["Cottage cheese (1 cup)",206,28],["Cheddar cheese (1oz)",113,7],["Mozzarella (1oz)",85,6],["Cream cheese (1 tbsp)",51,1],["Butter (1 tbsp)",102,0],["Olive oil (1 tbsp)",119,0],["Peanut butter (2 tbsp)",188,8],["Almonds (1oz)",164,6],["Walnuts (1oz)",185,4],["Cashews (1oz)",157,5],["Almond butter (2 tbsp)",196,7],["Black beans (1 cup)",227,15],["Chickpeas (1 cup)",269,15],["Lentils (1 cup cooked)",230,18],["Tofu (4oz)",94,10],["Hummus (2 tbsp)",70,2],["Protein powder (1 scoop)",120,24],["Protein bar",200,20],["Cheese pizza (1 slice)",285,12],["Pepperoni pizza (1 slice)",313,13],["Honey (1 tbsp)",64,0],["Maple syrup (1 tbsp)",52,0],["Jelly (1 tbsp)",56,0],["Ketchup (1 tbsp)",17,0],["Mayonnaise (1 tbsp)",94,0],["Ranch dressing (2 tbsp)",129,1],["Coffee (black)",2,0],["Orange juice (1 cup)",112,2],["Coca-Cola (12oz can)",140,0],["Diet Coke (12oz can)",0,0],["Beer (12oz)",153,2],["Red wine (5oz)",125,0],["Dark chocolate (1oz)",155,2],["Ice cream (1/2 cup)",137,2],["Granola (1/2 cup)",235,5],["Cereal (1 cup)",110,2],["Pancake (1)",86,2],["French fries (medium)",365,4],["Hamburger patty (4oz)",287,19],["McDonald's Big Mac",590,25],["McDonald's Quarter Pounder",520,30],["McDonald's McChicken",400,14],["McDonald's 10pc McNuggets",410,23],["McDonald's Medium Fries",320,5],["McDonald's Egg McMuffin",310,17],["Chipotle Chicken Bowl",625,45],["Chipotle Steak Bowl",650,39],["Chipotle Carnitas Bowl",670,36],["Chipotle Chicken Burrito",975,49],["Chipotle Guacamole",230,2],["Chipotle Chips",540,7],["Subway 6in Turkey",280,18],["Subway 6in Italian BMT",390,19],["Subway 6in Meatball",480,21],["Subway Footlong Turkey",560,36],["Starbucks Grande Latte",190,13],["Starbucks Grande Caramel Macchiato",250,10],["Starbucks Grande Cappuccino",140,9],["Starbucks Bacon Gouda Sandwich",360,18],["Chick-fil-A Sandwich",440,28],["Chick-fil-A Deluxe Sandwich",490,29],["Chick-fil-A 8pc Nuggets",250,27],["Chick-fil-A Waffle Fries (medium)",420,5],["Chick-fil-A Spicy Sandwich",450,28],["Chick-fil-A Cobb Salad",510,40],["Taco Bell Crunchy Taco",170,8],["Taco Bell Soft Taco",180,9],["Taco Bell Crunchwrap Supreme",530,16],["Taco Bell Bean Burrito",350,13],["Taco Bell Quesadilla Chicken",510,26],["Wendy's Dave's Single",590,30],["Wendy's Baconator",950,56],["Wendy's 10pc Nuggets",420,22],["Wendy's Medium Fries",420,6],["Burger King Whopper",657,28],["Burger King Chicken Fries (9pc)",280,14],["In-N-Out Double-Double",670,37],["In-N-Out Cheeseburger",480,22],["In-N-Out Animal Fries",750,13],["Panera Broccoli Cheddar Soup (cup)",230,8],["Panera Caesar Salad",440,16],["Five Guys Hamburger",700,39],["Five Guys Little Fries",526,8],["Domino's Pepperoni Pizza (1 slice, med)",200,8],["Dunkin Bacon Egg Cheese Croissant",510,19],["Dunkin Medium Latte",180,10],["Panda Express Orange Chicken",490,25],["Panda Express Fried Rice",520,11],["Panda Express Chow Mein",510,13],["Panda Express Broccoli Beef",150,9],["KFC Original Drumstick",130,11],["KFC Original Breast",320,39],["Raising Cane's 3pc Combo",660,33],["Shake Shack ShackBurger",530,28],["Shake Shack Fries",470,6],["Sweetgreen Harvest Bowl",685,26],["Jersey Mike's Turkey (regular)",590,30]];
 
 function getPersonalDB() { try { return JSON.parse(storeGet('fuel_fooddb') || '[]'); } catch(e) { return []; } }
 function savePersonalDB(db) { storeSet('fuel_fooddb', JSON.stringify(db)); }
@@ -527,58 +526,34 @@ function deleteFromPersonalDB(name) {
   savePersonalDB(out);
 }
 
-var acTimer = null;
-var acOFFResults = [];
-
 function onFoodNameInput() {
   var q = document.getElementById('inp-name').value.trim();
-  if (acTimer) clearTimeout(acTimer);
   if (q.length < 1) { hideAutocomplete(); return; }
   renderAutocomplete(q);
-  // Debounced Open Food Facts network search
-  acTimer = setTimeout(function() { searchOpenFoodFacts(q); }, 350);
 }
 
 function localMatches(q) {
   var ql = q.toLowerCase();
   var results = [];
-  // Personal DB first (sorted by frequency)
+  // Personal DB only (sorted by frequency)
   var db = getPersonalDB().slice().sort(function(a,b){ return (b.count||0)-(a.count||0); });
   for (var i=0; i<db.length; i++) {
-    if (db[i].name.toLowerCase().indexOf(ql) !== -1) results.push({name:db[i].name, calories:db[i].calories, protein:db[i].protein, src:'mine'});
-  }
-  // Seed foods
-  for (var j=0; j<SEED_FOODS.length; j++) {
-    var f = SEED_FOODS[j];
-    if (f[0].toLowerCase().indexOf(ql) !== -1) {
-      // skip if already in personal results by same name
-      var dup = false;
-      for (var k=0; k<results.length; k++){ if (results[k].name.toLowerCase()===f[0].toLowerCase()){dup=true;break;} }
-      if (!dup) results.push({name:f[0], calories:f[1], protein:f[2], src:'db'});
-    }
+    if (db[i].name.toLowerCase().indexOf(ql) !== -1) results.push({name:db[i].name, calories:db[i].calories, protein:db[i].protein});
   }
   return results;
 }
 
 function renderAutocomplete(q) {
-  var local = localMatches(q);
-  var all = local.concat(acOFFResults);
-  // De-dupe by name
-  var seen = {}; var deduped = [];
-  for (var i=0;i<all.length;i++){ var nk=all[i].name.toLowerCase(); if(!seen[nk]){seen[nk]=1;deduped.push(all[i]);} }
-  deduped = deduped.slice(0, 30);
+  var deduped = localMatches(q).slice(0, 30);
   var box = document.getElementById('autocomplete-list');
   if (deduped.length === 0) { hideAutocomplete(); return; }
   var html = '';
   for (var m=0; m<deduped.length; m++) {
     var it = deduped[m];
     var safe = it.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    var srcColor = it.src==='mine' ? 'background:#1a1a2e;color:#60a5fa' : (it.src==='db' ? 'background:#1a2a1a;color:#22c55e' : 'background:#2a2a1a;color:#eab308');
-    var srcLabel = it.src==='mine' ? 'MINE' : (it.src==='db' ? 'DB' : 'OFF');
     html += '<div class="ac-item" onclick="pickAutocomplete(\'' + safe + '\',' + it.calories + ',' + it.protein + ')">';
     html += '<span class="ac-name">' + it.name + '</span>';
     html += '<span class="ac-macro">' + it.calories + ' Cal · ' + it.protein + 'g</span>';
-    html += '<span class="ac-src" style="' + srcColor + '">' + srcLabel + '</span>';
     html += '</div>';
   }
   box.innerHTML = html;
@@ -591,34 +566,11 @@ function pickAutocomplete(name, cal, prot) {
   document.getElementById('inp-prot').value = prot;
   document.getElementById('inp-servings').value = '';
   hideAutocomplete();
-  acOFFResults = [];
 }
 
 function hideAutocomplete() {
   var box = document.getElementById('autocomplete-list');
   if (box) box.style.display = 'none';
-}
-
-function searchOpenFoodFacts(q) {
-  var url = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms=' + encodeURIComponent(q) + '&search_simple=1&action=process&json=1&page_size=12&fields=product_name,nutriments';
-  fetch(url).then(function(r){ return r.json(); }).then(function(data){
-    var prods = data.products || [];
-    var out = [];
-    for (var i=0;i<prods.length;i++){
-      var p = prods[i];
-      var nm = p.product_name;
-      if (!nm) continue;
-      var n = p.nutriments || {};
-      var cal = n['energy-kcal_serving'] || n['energy-kcal_100g'];
-      var prot = n['proteins_serving'] || n['proteins_100g'];
-      if (cal == null) continue;
-      out.push({ name: nm.trim(), calories: Math.round(cal), protein: Math.round((prot||0)*10)/10, src:'off' });
-    }
-    acOFFResults = out;
-    // Only re-render if the query still matches what's typed
-    var cur = document.getElementById('inp-name').value.trim();
-    if (cur === q) renderAutocomplete(q);
-  }).catch(function(){ /* offline or blocked - silently ignore, local still works */ });
 }
 
 // ---- HIDDEN PERSONAL DB MANAGER ----
