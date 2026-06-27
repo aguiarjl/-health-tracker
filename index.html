@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Health Tracker v36</title>
+<title>Health Tracker v37</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -620,20 +620,51 @@ var ESTIMATOR_WORKER_URL = "https://health-tracker.jonathanlaguiar.workers.dev/"
 var estImageData = null;
 var estImageMedia = null;
 var estResult = null;
+var estTimer = null;
 
 function openEstimator() { document.getElementById('est-modal').classList.add('active'); }
-function closeEstimator() { document.getElementById('est-modal').classList.remove('active'); }
+function closeEstimator() {
+  document.getElementById('est-modal').classList.remove('active');
+  if (estTimer) { clearInterval(estTimer); estTimer = null; }
+}
+
+function compressImage(dataURL, maxDimension, quality, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var w = img.width, h = img.height;
+    if (w > maxDimension || h > maxDimension) {
+      if (w > h) { h = Math.round(h * maxDimension / w); w = maxDimension; }
+      else { w = Math.round(w * maxDimension / h); h = maxDimension; }
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    var compressed = canvas.toDataURL('image/jpeg', quality);
+    var base64 = compressed.substring(compressed.indexOf(',') + 1);
+    callback(base64, 'image/jpeg', Math.round(base64.length * 0.75 / 1024));
+  };
+  img.src = dataURL;
+}
 
 function onEstFile(e) {
   var file = e.target.files && e.target.files[0];
   if (!file) return;
+  var statusEl = document.getElementById('est-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'COMPRESSING IMAGE...';
   var reader = new FileReader();
   reader.onload = function() {
     var result = reader.result;
-    estImageMedia = result.substring(5, result.indexOf(';'));
-    estImageData = result.substring(result.indexOf(',') + 1);
-    document.getElementById('est-preview').src = result;
-    document.getElementById('est-preview-wrap').style.display = 'block';
+    // Compress to max 1024px, 0.82 quality — good for nutrition labels + orders
+    compressImage(result, 1024, 0.82, function(base64, mime, kb) {
+      estImageData = base64;
+      estImageMedia = mime;
+      document.getElementById('est-preview').src = 'data:' + mime + ';base64,' + base64;
+      document.getElementById('est-preview-wrap').style.display = 'block';
+      statusEl.style.display = 'none';
+      statusEl.textContent = '';
+    });
   };
   reader.readAsDataURL(file);
 }
@@ -656,26 +687,47 @@ function runEstimate() {
   var resultEl = document.getElementById('est-result');
   resultEl.style.display = 'none';
   statusEl.style.display = 'block';
-  statusEl.textContent = 'ESTIMATING...';
   goEl.disabled = true; goEl.style.opacity = '0.5';
+
+  // Animated elapsed timer so user knows it's working
+  var elapsed = 0;
+  var dots = ['', '.', '..', '...'];
+  statusEl.textContent = 'ESTIMATING...';
+  if (estTimer) clearInterval(estTimer);
+  estTimer = setInterval(function() {
+    elapsed++;
+    statusEl.textContent = 'ESTIMATING' + dots[elapsed % 4] + ' (' + elapsed + 's)';
+  }, 1000);
 
   var payload = { text: text };
   if (estImageData) { payload.image = estImageData; payload.mediaType = estImageMedia; }
 
+  // 25 second timeout
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, 25000);
+
   fetch(ESTIMATOR_WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal: controller.signal
   })
-  .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+  .then(function(r){ clearTimeout(timeoutId); return r.json().then(function(j){ return { ok: r.ok, status: r.status, body: j }; }); })
   .then(function(res){
+    clearInterval(estTimer); estTimer = null;
     statusEl.style.display = 'none';
     goEl.disabled = false; goEl.style.opacity = '1';
     if (!res.ok || res.body.error) {
-      var msg = res.body && res.body.error ? res.body.error : 'Estimate failed.';
-      if (res.body && res.body.detail) msg += ' (' + res.body.detail + ')';
-      alert(msg);
-      return;
+      var msg = '';
+      if (res.status === 429 || (res.body && res.body.detail && res.body.detail.indexOf('quota') !== -1)) {
+        msg = 'Out of OpenAI credit. Add credit at platform.openai.com to continue.';
+      } else if (res.status === 401 || (res.body && res.body.detail && res.body.detail.indexOf('auth') !== -1)) {
+        msg = 'OpenAI API key issue. Check your key in the Cloudflare Worker secrets.';
+      } else {
+        msg = res.body && res.body.error ? res.body.error : 'Estimate failed.';
+        if (res.body && res.body.detail) msg += '\n\n' + res.body.detail;
+      }
+      alert(msg); return;
     }
     var b = res.body;
     estResult = { name: b.name || 'Estimated food', calories: Math.round(b.calories) || 0, protein: Math.round(b.protein) || 0 };
@@ -685,9 +737,15 @@ function runEstimate() {
     resultEl.style.display = 'block';
   })
   .catch(function(err){
+    clearTimeout(timeoutId);
+    clearInterval(estTimer); estTimer = null;
     statusEl.style.display = 'none';
     goEl.disabled = false; goEl.style.opacity = '1';
-    alert('Could not reach the estimator. Check your connection.');
+    if (err.name === 'AbortError') {
+      alert('Timed out after 25 seconds. Try a text description instead, or check your connection.');
+    } else {
+      alert('Could not reach the estimator. Check your connection.');
+    }
   });
 }
 
